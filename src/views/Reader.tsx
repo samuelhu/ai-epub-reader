@@ -123,6 +123,15 @@ function findChapterTitle(tocMap: Map<string, string>, href: string): string {
   return '';
 }
 
+function isSingleWord(t: string): boolean {
+  return t.length > 0 && !/\s/.test(t);
+}
+
+function stopSpeech(setIsSpeaking: (v: boolean) => void) {
+  window.speechSynthesis.cancel();
+  setIsSpeaking(false);
+}
+
 export default function Reader({ bookId, onClose, onGoToSettings }: ReaderProps) {
   const { toast } = useToast();
   const viewerRef = useRef<HTMLDivElement>(null);
@@ -295,8 +304,7 @@ export default function Reader({ bookId, onClose, onGoToSettings }: ReaderProps)
 
               const text = selection.toString().trim();
               if (text) {
-                window.speechSynthesis.cancel();
-                setIsSpeaking(false);
+                stopSpeech(setIsSpeaking);
                 setTimeout(() => {
                   setSelectedText(text);
                   setAiExplanation('');
@@ -373,8 +381,7 @@ export default function Reader({ bookId, onClose, onGoToSettings }: ReaderProps)
               setAiPanelPos(null);
               setAiExplanation('');
               setIsPinned(false);
-              window.speechSynthesis.cancel();
-              setIsSpeaking(false);
+              stopSpeech(setIsSpeaking);
             }
             setIsHeaderVisible(v => !v);
           });
@@ -395,6 +402,7 @@ export default function Reader({ bookId, onClose, onGoToSettings }: ReaderProps)
     return () => {
       // Book stays in cache for fast reopen — only clean up the current rendition
       renditionRef.current?.destroy();
+      renditionRef.current = null;
       window.speechSynthesis.cancel();
     };
   }, [bookId]);
@@ -537,7 +545,6 @@ export default function Reader({ bookId, onClose, onGoToSettings }: ReaderProps)
   // Auto-trigger Brief only for single words (dictionary/lookup). Longer
   // selections show the panel but wait for the user to click Brief or Detailed.
   const lastAutoTextRef = useRef('');
-  const isSingleWord = (t: string) => t.trim().split(/\s+/).length === 1;
   useEffect(() => {
     if (selectedText && selectedText !== lastAutoTextRef.current && !isAiLoading && !isPinned && isSingleWord(selectedText)) {
       lastAutoTextRef.current = selectedText;
@@ -608,8 +615,7 @@ export default function Reader({ bookId, onClose, onGoToSettings }: ReaderProps)
 
   const handleSpeak = () => {
     if (isSpeaking) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
+      stopSpeech(setIsSpeaking);
     } else {
       setPanelVisible(false);
       setIsHeaderVisible(true);
@@ -622,8 +628,7 @@ export default function Reader({ bookId, onClose, onGoToSettings }: ReaderProps)
   };
 
   const handleTxtSelection = () => {
-    window.speechSynthesis.cancel();
-    setIsSpeaking(false);
+    stopSpeech(setIsSpeaking);
     setTimeout(() => {
       const sel = window.getSelection();
       if (!sel || sel.isCollapsed) return;
@@ -655,9 +660,9 @@ export default function Reader({ bookId, onClose, onGoToSettings }: ReaderProps)
     setSelectedText('');
     setAiExplanation('');
     setIsPinned(false);
+    setPanelVisible(true);
     if (isSpeaking) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
+      stopSpeech(setIsSpeaking);
     }
   };
 
