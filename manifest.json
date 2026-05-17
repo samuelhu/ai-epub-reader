@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "AI-Powered EPUB Reader",
   "version": "1.0.0",
-  "description": "Read EPUB files with an AI Tutor and Text-to-Speech.",
+  "description": "Read EPUB and TXT files with an AI Tutor and Text-to-Speech.",
   "action": {
     "default_title": "Open Reader"
   },
