@@ -10,7 +10,7 @@ A Chrome extension that turns your browser into a distraction-free reading envir
 
 **Your data stays yours.** Everything runs locally. Books are stored in your browser's IndexedDB — they never touch a server. AI requests go directly from your browser to the provider you choose. No telemetry, no analytics, no third-party tracking.
 
-**One-click AI.** Select any passage and get an instant explanation. Brief mode auto-fires a one-sentence distillation. Tap *Detailed* for a structured breakdown with vocabulary, style notes, and deeper reading. Text-to-speech is built in — have any passage read aloud with a single click.
+**One-click AI.** Select any text and the AI tutor appears. For a single word, Brief fires automatically like a dictionary lookup. For longer passages, tap *Brief* for a one-sentence distillation or *Detailed* for a structured breakdown with vocabulary, style notes, and deeper reading. Text-to-speech is built in — have any passage read aloud with a single click.
 
 **Read your way.** EPUB and TXT, three themes (Light, Dark, Sepia), adjustable fonts and sizing, fullscreen mode, keyboard navigation. Your reading position and theme preference are remembered per book.
 
@@ -61,7 +61,7 @@ Then load the `dist/` folder as an unpacked extension (same as steps 3–4 above
 1. Click the extension icon in Chrome's toolbar to open the reader
 2. Drag an `.epub` or `.txt` file onto the library — books are stored locally
 3. Click a book to open it
-4. **Select any text** — the AI tutor fires a brief explanation automatically
+4. **Select any text** — the AI tutor panel appears. Single words get an instant dictionary lookup; longer selections wait for you to tap Brief or Detailed
 5. Click **Detailed** for in-depth analysis, or **Read Aloud** for text-to-speech
 6. Configure your AI provider in **Settings** (gear icon in the library)
 
