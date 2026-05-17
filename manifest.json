@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "AI-Powered EPUB Reader",
+  "version": "1.0.0",
+  "description": "Read EPUB files with an AI Tutor and Text-to-Speech.",
+  "action": {
+    "default_title": "Open Reader"
+  },
+  "background": {
+    "service_worker": "src/background.ts",
+    "type": "module"
+  },
+  "permissions": [
+    "storage",
+    "unlimitedStorage"
+  ],
+  "host_permissions": [
+    "http://localhost:11434/*",
+    "https://api.openai.com/*",
+    "https://api.deepseek.com/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://api.anthropic.com/*"
+  ]
+}
