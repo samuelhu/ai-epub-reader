@@ -32,10 +32,18 @@ A Chrome extension that transforms your browser into a premium reading environme
 
 ## Installation
 
+### Quick Install (No Build Required)
+
+1. Download `ai-epub-reader-v1.0.0.zip` from the [latest release](https://github.com/samuelhu/ai-epub-reader/releases/latest)
+2. Unzip to get the `dist/` folder
+3. Go to `chrome://extensions`, enable **Developer mode** (toggle in top right)
+4. Click **Load unpacked** and select the `dist/` folder
+5. The extension is ready — click the puzzle icon in Chrome's toolbar to pin it
+
 ### From Source
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ai-epub-reader.git
+git clone https://github.com/samuelhu/ai-epub-reader.git
 cd ai-epub-reader
 npm install
 npm run build
