@@ -1,4 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="7" fill="#2563eb"/>
+  <defs>
+    <linearGradient id="indigo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2d2d49"/>
+      <stop offset="100%" stop-color="#212138"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="7" fill="url(#indigo)"/>
   <text x="16" y="22" text-anchor="middle" fill="white" font-family="-apple-system, 'Heiti SC', 'PingFang SC', sans-serif" font-size="21" font-weight="700">读</text>
 </svg>
