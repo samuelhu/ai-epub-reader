@@ -1,5 +1,7 @@
 # AI-Powered EPUB Reader
 
+**[samuelhu.github.io/ai-epub-reader](https://samuelhu.github.io/ai-epub-reader/)**
+
 A Chrome extension that turns your browser into a distraction-free reading environment. Read EPUB and TXT files with an AI tutor that explains any passage — select text and get an instant, intelligent explanation.
 
 <br>
