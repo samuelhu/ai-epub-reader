@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, memo } from 'react';
 import { type Book, type Rendition } from 'epubjs';
 import { db } from '../db';
-import { ArrowLeft, Type, Sparkles, Volume2, X, List, Maximize, Minimize, Pin, PinOff } from 'lucide-react';
+import { ArrowLeft, Type, Sparkles, Volume2, X, List, Maximize, Minimize, Pin, PinOff, Square } from 'lucide-react';
 import { explainText } from '../utils/ai';
 import { useToast } from '../components/Toast';
 import { getCachedBook } from '../utils/bookCache';
@@ -168,6 +168,7 @@ export default function Reader({ bookId, onClose, onGoToSettings }: ReaderProps)
   const [aiExplanation, setAiExplanation] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [panelVisible, setPanelVisible] = useState(true);
   const [aiPanelPos, setAiPanelPos] = useState<{top: number, left: number} | null>(null);
   const [isPinned, setIsPinned] = useState(false);
   const [aiMode, setAiMode] = useState<'simple' | 'detailed'>('detailed');
@@ -294,8 +295,11 @@ export default function Reader({ bookId, onClose, onGoToSettings }: ReaderProps)
 
               const text = selection.toString().trim();
               if (text) {
+                window.speechSynthesis.cancel();
+                setIsSpeaking(false);
                 setTimeout(() => {
                   setSelectedText(text);
+                  setAiExplanation('');
                   setShowSettings(false);
                   setShowToc(false);
 
@@ -370,6 +374,7 @@ export default function Reader({ bookId, onClose, onGoToSettings }: ReaderProps)
               setAiExplanation('');
               setIsPinned(false);
               window.speechSynthesis.cancel();
+              setIsSpeaking(false);
             }
             setIsHeaderVisible(v => !v);
           });
@@ -529,14 +534,33 @@ export default function Reader({ bookId, onClose, onGoToSettings }: ReaderProps)
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // Auto-trigger Brief explanation when text is selected
+  // Auto-trigger Brief only for single words (dictionary/lookup). Longer
+  // selections show the panel but wait for the user to click Brief or Detailed.
   const lastAutoTextRef = useRef('');
+  const isSingleWord = (t: string) => t.trim().split(/\s+/).length === 1;
   useEffect(() => {
-    if (selectedText && selectedText !== lastAutoTextRef.current && !isAiLoading && !isPinned) {
+    if (selectedText && selectedText !== lastAutoTextRef.current && !isAiLoading && !isPinned && isSingleWord(selectedText)) {
       lastAutoTextRef.current = selectedText;
       handleExplain('simple');
     }
   }, [selectedText]);
+
+  // Show panel when new text is selected (may have been hidden by Read Aloud)
+  useEffect(() => {
+    if (selectedText) setPanelVisible(true);
+  }, [selectedText]);
+
+  // Auto-dismiss chip after 30s if user ignores it
+  useEffect(() => {
+    if (!isSpeaking && aiExplanation && !panelVisible && selectedText) {
+      const timer = setTimeout(() => {
+        lastAutoTextRef.current = '';
+        setSelectedText('');
+        setAiExplanation('');
+      }, 30_000);
+      return () => clearTimeout(timer);
+    }
+  }, [isSpeaking, aiExplanation, panelVisible, selectedText]);
 
   const prevPage = () => rendition?.prev();
   const nextPage = () => rendition?.next();
@@ -587,6 +611,8 @@ export default function Reader({ bookId, onClose, onGoToSettings }: ReaderProps)
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
     } else {
+      setPanelVisible(false);
+      setIsHeaderVisible(true);
       const utterance = new SpeechSynthesisUtterance(selectedText);
       utterance.onend = () => setIsSpeaking(false);
       utterance.onerror = () => setIsSpeaking(false);
@@ -596,12 +622,15 @@ export default function Reader({ bookId, onClose, onGoToSettings }: ReaderProps)
   };
 
   const handleTxtSelection = () => {
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
     setTimeout(() => {
       const sel = window.getSelection();
       if (!sel || sel.isCollapsed) return;
       const text = sel.toString().trim();
       if (text) {
         setSelectedText(text);
+        setAiExplanation('');
         setShowSettings(false);
         setShowToc(false);
         try {
@@ -649,6 +678,11 @@ export default function Reader({ bookId, onClose, onGoToSettings }: ReaderProps)
           <button className="icon-btn" onClick={() => setIsFullscreen(!isFullscreen)} aria-label="Toggle Fullscreen">
             {isFullscreen ? <Minimize /> : <Maximize />}
           </button>
+          {isSpeaking && (
+            <button className="icon-btn stop-btn" onClick={handleSpeak} aria-label="Stop reading">
+              <Square size={16} />
+            </button>
+          )}
         </div>
       </header>
 
@@ -670,7 +704,7 @@ export default function Reader({ bookId, onClose, onGoToSettings }: ReaderProps)
       )}
 
       {/* AI Context Panel */}
-      {selectedText && (
+      {selectedText && panelVisible && !isSpeaking && (
         <div className="ai-panel ai-panel-primary" style={aiPanelPos ? { top: `${aiPanelPos.top}px`, left: `${aiPanelPos.left}px` } : {}}>
           <div className="ai-panel-accent-bar" />
           <div className="ai-panel-inner">
@@ -693,7 +727,7 @@ export default function Reader({ bookId, onClose, onGoToSettings }: ReaderProps)
               <button className="action-btn secondary" onClick={() => handleExplain('detailed')}>Detailed</button>
             </div>
             <button className="action-btn secondary" onClick={handleSpeak} style={{ width: '100%' }}>
-              <Volume2 size={14} /> {isSpeaking ? 'Stop' : 'Read Aloud'}
+              <Volume2 size={14} /> Read Aloud
             </button>
 
             <div className={`ai-panel-answer ${aiMode === 'simple' && aiExplanation ? 'ai-panel-answer-brief' : ''}`}>
@@ -709,13 +743,28 @@ export default function Reader({ bookId, onClose, onGoToSettings }: ReaderProps)
                 <span className="ai-streaming-cursor" />
               )}
               {!isAiLoading && !aiExplanation && (
-                <p className="ai-setup-hint">
-                  Not seeing responses?<br />
-                  Set up your AI provider in <button className="ai-setup-link" onClick={() => { closeSelection(); onGoToSettings(); }}>Settings</button>.
-                </p>
+                isSingleWord(selectedText) ? (
+                  <p className="ai-setup-hint">
+                    No response for this word.<br />
+                    Set up your AI provider in <button className="ai-setup-link" onClick={() => { closeSelection(); onGoToSettings(); }}>Settings</button>.
+                  </p>
+                ) : (
+                  <p className="ai-setup-hint">
+                    Tap <strong>Brief</strong> for a quick summary or <strong>Detailed</strong> for in‑depth analysis.
+                  </p>
+                )
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* AI Response chip — appears after Read Aloud ends if a response exists */}
+      {!isSpeaking && aiExplanation && !panelVisible && selectedText && (
+        <div className="ai-response-chip" onClick={() => setPanelVisible(true)}>
+          <Sparkles size={14} />
+          AI response ready
+          <span className="ai-response-chip-action"> — Show</span>
         </div>
       )}
 
